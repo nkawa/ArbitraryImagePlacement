@@ -98,15 +98,15 @@ const MovingImage = (props)=>{
     const top = (idx*0)%window.innerHeight
     const left = (idx*0)%window.innerWidth
     return(<MovingElement key={idx} imgsrc={titleimg.imgpath} title={`${idx+1} : ${titleimg.imgpath}`}
-      imgStyle={props.imgStyle}  
+      imgStyle={{...props.imgStyle,...titleimg.imgStyle}}  
       style={{top:top,left:left,...props.style,...titleimg.style}}
       className="click-and-move"/>)
   })}</div>
   )
 }
 MovingImage.defaultProps = {
-  imgStyle: {width:'230px'},
-  style: {width:'230px',height:'129px'}
+  imgStyle: {width:'230px',transform:'translate(-50%, -50%)'},
+  style: {baseWidth:'230px',baseHeight:'129px',width:'230px',height:'129px'}
 }
 
 const MovingElement = (props)=>{
@@ -115,6 +115,7 @@ const MovingElement = (props)=>{
   const frameRef = React.useRef(undefined)
   const imgRef = React.useRef(undefined)
   const circleRef = React.useRef(undefined)
+  const baseeRef = React.useRef(undefined)
 
   const mouseup = event=>{
     event.preventDefault()
@@ -133,22 +134,18 @@ const MovingElement = (props)=>{
   React.useEffect(()=>{
     if(imgRef.current !== undefined){
       imgRef.current.ondragstart = ()=>false
+      const perspectivebase = imgRef.current.closest('.perspectivebase')
+      const base = baseeRef.current
       const circle = circleRef.current
       imgRef.current.addEventListener('mousedown',event=>{
-        let imgElement = undefined
-        const targetclassName = event.target.className
-        if(targetclassName.includes(className)){
-          imgElement = event.target
-        }else{
-          imgElement = event.target.closest(`.${className}`)
-        }
-        dragged.target = imgElement.closest('.img_frame')
+        dragged.target = frameRef.current
         const width = parseFloat(dragged.target.style.width.match(/-{0,1}[0-9.]+/g)[0])|0
         const height = parseFloat(dragged.target.style.height.match(/-{0,1}[0-9.]+/g)[0])|0
-        dragged.x = event.pageX - dragged.target.offsetLeft
-        dragged.y = event.pageY - dragged.target.offsetTop
-        dragged.degree = (Math.atan2(event.pageY-(dragged.target.offsetTop+(dragged.target.clientHeight/2)),
-        event.pageX-(dragged.target.offsetLeft+(dragged.target.clientWidth/2))) * 180 / Math.PI) + 180
+        dragged.x = event.pageX - base.offsetLeft
+        dragged.y = event.pageY - base.offsetTop
+        dragged.degree = (Math.atan2(
+          (event.pageY-100+perspectivebase.scrollTop)-(base.offsetTop+(base.clientHeight/2)),
+          (event.pageX-100+perspectivebase.scrollLeft)-(base.offsetLeft+(base.clientWidth/2))) * 180 / Math.PI) + 180
         const transform = dragged.target.style.transform
         if(transform.includes('rotate')){
           const rotate = transform.match(/rotate\(-{0,1}[0-9.]+deg\)/g)[0]
@@ -192,6 +189,11 @@ const MovingElement = (props)=>{
           e.classList.remove('select')
         }
         dragged.target.classList.add('select')
+        const select_img = document.getElementsByClassName('select_img')
+        for(const e of select_img){
+          e.classList.remove('select_img')
+        }
+        imgRef.current.classList.add('select_img')
         const circleDiv = document.getElementsByClassName('circle')
         for(const e of circleDiv){
           e.classList.remove('circle')
@@ -205,13 +207,14 @@ const MovingElement = (props)=>{
         if(dragged.target !== undefined){
           const drag = document.getElementsByClassName('drag')[0]
           if(drag){
-            dragged.target.style.top = `${event.pageY - dragged.y}px`;
-            dragged.target.style.left = `${event.pageX - dragged.x}px`;
+            base.style.top = `${event.pageY - dragged.y}px`;
+            base.style.left = `${event.pageX - dragged.x}px`;
           }
           const rotate = document.getElementsByClassName('rotate')[0]
           if(rotate){
-            const degree = (Math.atan2(event.pageY-(dragged.target.offsetTop+(dragged.target.clientHeight/2)),
-            event.pageX-(dragged.target.offsetLeft+(dragged.target.clientWidth/2))) * 180 / Math.PI) + 180
+            const degree = (Math.atan2(
+              (event.pageY-100+perspectivebase.scrollTop)-(base.offsetTop+(base.clientHeight/2)),
+              (event.pageX-100+perspectivebase.scrollLeft)-(base.offsetLeft+(base.clientWidth/2))) * 180 / Math.PI) + 180
             if(dragged.degree !== degree){
               const rotate = (dragged.rotate - (dragged.degree - degree)) % 360
               dragged.target.style.transform =
@@ -235,10 +238,13 @@ const MovingElement = (props)=>{
     }
   },[imgRef])
 
+  const {top:baseTop, left:baseLeft, baseWidth, baseHeight, ...otherStyle} = style
   return(
-    <div draggable={true} ref={frameRef} className="img_frame" style={{maxWidth:style.width,maxHeight:style.height,...style}} title={title}>
-      <img draggable={false} ref={imgRef} className={className} src={imgsrc} style={imgStyle}/>
-      <div ref={circleRef} style={{top:(style.height/2),left:(style.width/2)}}></div>
+    <div ref={baseeRef} className='base_data' style={{top:style.top,left:style.left,width:style.baseWidth,height:style.baseHeight}}>
+      <div draggable={true} ref={frameRef} className="img_frame" style={{maxWidth:style.width,maxHeight:style.height,...otherStyle}} title={title}>
+        <img draggable={false} ref={imgRef} className={className} src={imgsrc} style={imgStyle}/>
+        <div ref={circleRef} style={{top:(style.height/2),left:(style.width/2)}}></div>
+      </div>
     </div>
   )
 }

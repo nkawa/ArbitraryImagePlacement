@@ -86,6 +86,9 @@ const BaseTransformController = ()=>{
 const TransformController = ()=>{
   let style = {top:'',left:''}
   let transform = ''
+  let base = undefined
+  let baseStyle = {top:'',left:''}
+  let transform_img = ''
   const [rotate,setRotate] = useState(0)
   const [rotateX,setRotateX] = useState(0)
   const [rotateY,setRotateY] = useState(0)
@@ -97,30 +100,38 @@ const TransformController = ()=>{
   const [width,setWidth] = useState(1)
   const [maxHeight,setMaxHeight] = useState(1)
   const [maxWidth,setMaxWidth] = useState(1)
+  const [translateX,setTranslateX] = useState(0)
+  const [translateY,setTranslateY] = useState(0)
   const select = document.getElementsByClassName('select')[0]
   if(select){
     style = select.style
     transform = select.style.transform
+    base = select.closest('.base_data')
+    baseStyle = base.style
+  }
+  const select_img = document.getElementsByClassName('select_img')[0]
+  if(select_img){
+    transform_img = select_img.style.transform
   }
   const circle = document.getElementsByClassName('circle')[0]
 
   React.useEffect(()=>{
-    if(style.top.includes('px')){
-      const value = parseFloat(style.top.match(/-{0,1}[0-9.]+/g)[0])
+    if(baseStyle.top.includes('px')){
+      const value = parseFloat(baseStyle.top.match(/-{0,1}[0-9.]+/g)[0])
       setTop(value|0)
     }else{
       setTop(0)
     }
-  },[style.top])
+  },[baseStyle.top])
 
   React.useEffect(()=>{
-    if(style.left.includes('px')){
-      const value = parseFloat(style.left.match(/-{0,1}[0-9.]+/g)[0])
+    if(baseStyle.left.includes('px')){
+      const value = parseFloat(baseStyle.left.match(/-{0,1}[0-9.]+/g)[0])
       setLeft(value|0)
     }else{
       setLeft(0)
     }
-  },[style.left])
+  },[baseStyle.left])
 
   React.useEffect(()=>{
     if(style.maxHeight && style.maxHeight.includes('px')){
@@ -196,6 +207,20 @@ const TransformController = ()=>{
     }
   },[transform])
 
+  React.useEffect(()=>{
+    if(transform_img.includes('translate')){
+      const translate = transform_img.match(/translate\(-{0,1}[0-9.]+%, -{0,1}[0-9.]+%\)/g)[0]
+      const parameter = translate.match(/-{0,1}[0-9.]+/g)
+      const valueX = parseFloat(parameter[0])
+      const valueY = parseFloat(parameter[1])
+      setTranslateX(valueX+50)
+      setTranslateY(valueY+50)
+    }else{
+      setTranslateX(0)
+      setTranslateY(0)
+    }
+  },[transform_img])
+
   const onChangeRotate = (e)=>{
     const value = +e.target.value;
     setRotate(value)
@@ -228,6 +253,18 @@ const TransformController = ()=>{
     circle.style.top = `${(value/2)-5}px`
   }
 
+  const onChangeTranslateX = (e)=>{
+    const value = +e.target.value;
+    setTranslateX(value)
+    select_img.style.transform = `translate(${value-50}%, ${translateY-50}%)`
+  }
+
+  const onChangeTranslateY = (e)=>{
+    const value = +e.target.value;
+    setTranslateY(value)
+    select_img.style.transform = `translate(${translateX-50}%, ${value-50}%)`
+  }
+
   const onChangeScale = (e)=>{
     const value = +e.target.value;
     setScaleX(value)
@@ -238,14 +275,14 @@ const TransformController = ()=>{
   const onChangeTop = (e)=>{
     const value = +e.target.value;
     setTop(value)
-    select.style.top = `${value}px`
+    base.style.top = `${value}px`
     circle.style.top = `${value+(select.style.height/2)-5}px`
   }
 
   const onChangeLeft = (e)=>{
     const value = +e.target.value;
     setLeft(value)
-    select.style.left = `${value}px`
+    base.style.left = `${value}px`
     circle.style.left = `${value+(select.style.width/2)-5}px`
   }
 
@@ -312,6 +349,20 @@ const TransformController = ()=>{
           min={1} max={maxHeight} step={1} onChange={onChangeHeight}
           className="app_input_range" id="height" />
         {`: ${height}px`}
+      </li>
+      <li className="flex_row">
+        <label htmlFor="translateX">{`transX :`}</label>
+        <input type="range" value={translateX}
+          min={-50} max={50} step={0.2} onChange={onChangeTranslateX}
+          className="app_input_range" id="translateX" />
+        {`: ${translateX}%`}
+      </li>
+      <li className="flex_row">
+        <label htmlFor="translateY">{`transY :`}</label>
+        <input type="range" value={translateY}
+          min={-50} max={50} step={0.2} onChange={onChangeTranslateY}
+          className="app_input_range" id="translateY" />
+        {`: ${translateY}%`}
       </li>
       <li className="flex_row">
         <label htmlFor="scale">{`scale :`}</label>

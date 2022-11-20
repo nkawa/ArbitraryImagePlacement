@@ -8,16 +8,23 @@ export const PlacementOutput = ()=>{
   
         for(let i=0; i<clickAndMove.length; i=i+1){
           const imgFrame = clickAndMove[i].parentNode
+          const baseFrame = imgFrame.parentNode
           saveData.push({
             imgpath:clickAndMove[i].src.slice(basePathLength),
             style:{
-              top:imgFrame.style.top,
-              left:imgFrame.style.left,
+              top:baseFrame.style.top,
+              left:baseFrame.style.left,
+              baseWidth:baseFrame.style.width,
+              baseHeight:baseFrame.style.height,
               width:imgFrame.style.width,
               height:imgFrame.style.height,
               maxWidth:imgFrame.style.maxWidth,
               maxHeight:imgFrame.style.maxHeight,
               transform:imgFrame.style.transform,
+            },
+            imgStyle:{
+              width:clickAndMove[i].style.width,
+              transform:clickAndMove[i].style.transform,
             }
           })
         }
